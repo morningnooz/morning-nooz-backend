@@ -1,0 +1,8 @@
+
+azure-cognitiveservices-search-newssearch==2.0.0
+fastapi==0.99.1
+uvicorn==0.13.4
+urllib3==1.26.12
+langchain==0.0.333
+openai==0.27.8
+firebase-admin==6.1.0
