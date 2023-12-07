@@ -1,17 +1,16 @@
 import json
 import os
 import time
-from processing.bing_news import search
+from app.processing.bing_news import search
 from types import SimpleNamespace
 from langchain.chat_models.openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains.llm import LLMChain
 
-os.environ["OPENAI_API_KEY"] = "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"
-
 llm = ChatOpenAI(temperature=0, model="gpt-3.5-turbo-16k")
 
 # to do - use Bing + augment queries + use chain of thought
+
 
 def build_summary_chain(query, query_results):
     # Map
@@ -149,7 +148,9 @@ PROVIDER: alleywatch.com
 DESC: The average late-stage round in NYC for October was $56.4M Tweet This The median late-stage round in NYC for October was $40.0M Tweet This $395.0M was invested across late-stage rounds in NYC in October Tweet This 16.82% of late-stage funding nationally went to startups in NYC in October Tweet
 SCORE: 6
     Helpful Answer:"""
-    map_prompt = PromptTemplate.from_template(map_template, partial_variables={"query": query})
+    map_prompt = PromptTemplate.from_template(
+        map_template, partial_variables={"query": query}
+    )
     map_chain = LLMChain(llm=llm, prompt=map_prompt)
 
     mapped_res = map_chain.run(docs=query_results)
@@ -208,6 +209,7 @@ SCORE: 6
     reduce_res = reduce_chain.run(docs_info=mapped_res, query_string=query)
 
     return reduce_res
+
 
 # run query + construct summary & return object with summaries
 def run_process(query):
