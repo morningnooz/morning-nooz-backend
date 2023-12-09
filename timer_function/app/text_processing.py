@@ -30,6 +30,8 @@ def build_email(topics):
         res = json.loads(summaries_object, object_hook=lambda d: SimpleNamespace(**d))
         logging.info("after process")
         # format summary
+        logging.info("results:")
+        logging.info(res.summaries)
         formatted_summary = format_summary(topic, res)
 
         summary_list.append(formatted_summary)
@@ -56,7 +58,8 @@ def format_sources(sources):
 
 def format_summary(topic, summaries_obj):
     summaries_list = summaries_obj.summaries
-    logging.info("summaries list", summaries_list)
+    logging.info("summaries list")
+    logging.info(summaries_list)
     if len(summaries_list) == 0:
         return ""
 

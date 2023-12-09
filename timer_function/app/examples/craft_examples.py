@@ -20,7 +20,7 @@ ref = db.collection("examples")
 def topic_exists(topic, collection):
     query = collection.where("topic", "==", topic)
     res = query.get()
-    logging.info("RES", res)
+    logging.info(f"Response: {res}")
     return len(res) > 0
 
 
@@ -29,9 +29,9 @@ with open(file_path, "r") as file:
     for top in file:
         topic = top.strip()
         if topic_exists(topic, ref):
-            logging.info(topic + " - SKIP")
+            logging.info(f"{topic} - SKIP")
         else:
-            logging.info(topic + " - starting")
+            logging.info(f"{topic} - starting")
             res = run_process(topic)
             json_res = str(res)
             new_entry = {"topic": topic, "summary": res}
@@ -39,4 +39,4 @@ with open(file_path, "r") as file:
             logging.info("---new entry---")
             logging.info(new_entry)
             logging.info("---------------")
-            logging.info(topic + " - finished")
+            logging.info(f"{topic} - finished")

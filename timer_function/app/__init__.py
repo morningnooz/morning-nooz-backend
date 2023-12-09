@@ -18,7 +18,7 @@ email_password = os.getenv("SENDER_PASSWORD")
 
 
 def app(prod: bool):
-    logging.info("in prod", prod)
+    logging.info(f"in prod {prod}")
     cred = credentials.Certificate(
         "./app/morning-nooz-firebase-adminsdk-23o8s-47a5cd78d0.json"
     )
@@ -41,11 +41,11 @@ def app(prod: bool):
         counter = 0
         while len(summary_list) == 0 and counter < 10:
             try:
-                logging.info("summary attempt ", counter)
+                logging.info(f"summary attempt {counter}")
                 summary_list = build_email(topics)
                 break
             except:
-                logging.info("summary attempt failed")
+                logging.error("summary attempt failed")
                 counter += 1
         send_sendgrid_email(email, name, topics, summary_list)
 
@@ -77,10 +77,9 @@ def send_sendgrid_email(email_receiver, name, topic, summaries):
         logging.info(response.body)
         logging.info(response.headers)
 
-        logging.info("email sent to " + name)
-        logging.info("_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-")
+        logging.info(f"email sent to {name}")
     except Exception as e:
-        logging.info(e)
+        logging.error(e)
 
 
 def get_firebase_data(db, prod: bool):
