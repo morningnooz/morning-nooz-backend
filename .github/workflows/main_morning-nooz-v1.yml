@@ -33,7 +33,7 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
-        working-directory: /timer_function/
+        working-directory: timer_function
 
       # Optional: Add step to run tests here
 
