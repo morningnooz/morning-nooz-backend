@@ -26,6 +26,9 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
+      - name: Enter directory for app
+        run: cd timer_function
+
       - name: Create and start virtual environment
         run: |
           python -m venv venv
