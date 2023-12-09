@@ -9,6 +9,7 @@ import os
 
 import sys
 import firebase_admin
+import logging
 
 from app.text_processing import build_email
 
@@ -17,7 +18,7 @@ email_password = os.getenv("SENDER_PASSWORD")
 
 
 def app(prod: bool):
-    print("in prod", prod)
+    logging.info("in prod", prod)
     cred = credentials.Certificate(
         "./app/morning-nooz-firebase-adminsdk-23o8s-47a5cd78d0.json"
     )
@@ -40,11 +41,11 @@ def app(prod: bool):
         counter = 0
         while len(summary_list) == 0 and counter < 10:
             try:
-                print("summary attempt ", counter)
+                logging.info("summary attempt ", counter)
                 summary_list = build_email(topics)
                 break
             except:
-                print("summary attempt failed")
+                logging.info("summary attempt failed")
                 counter += 1
         send_sendgrid_email(email, name, topics, summary_list)
 
@@ -61,7 +62,7 @@ def send_sendgrid_email(email_receiver, name, topic, summaries):
         body_msg = body.substitute(name=name, topic=topic, summaries=summaries)
 
     email_sender = os.getenv("SENDER_EMAIL")
-    print(email_sender)
+    logging.info(email_sender)
 
     message = Mail(
         from_email=email_sender,
@@ -72,14 +73,14 @@ def send_sendgrid_email(email_receiver, name, topic, summaries):
     try:
         sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
         response = sg.send(message)
-        print(response.status_code)
-        print(response.body)
-        print(response.headers)
+        logging.info(response.status_code)
+        logging.info(response.body)
+        logging.info(response.headers)
 
-        print("email sent to " + name)
-        print("_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-")
+        logging.info("email sent to " + name)
+        logging.info("_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-")
     except Exception as e:
-        print(e)
+        logging.info(e)
 
 
 def get_firebase_data(db, prod: bool):

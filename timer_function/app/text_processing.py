@@ -10,11 +10,12 @@ from app.static import (
 from urllib.parse import quote
 from app.processing.process import run_process
 import json
+import logging
 
 
 # construct letter
 def build_email(topics):
-    print("building")
+    logging.info("building")
     # [{ topic, summary },...]
     summary_list = []
 
@@ -27,7 +28,7 @@ def build_email(topics):
 
         summaries_object = run_process(topic)
         res = json.loads(summaries_object, object_hook=lambda d: SimpleNamespace(**d))
-        print("after process")
+        logging.info("after process")
         # format summary
         formatted_summary = format_summary(topic, res)
 
@@ -55,7 +56,7 @@ def format_sources(sources):
 
 def format_summary(topic, summaries_obj):
     summaries_list = summaries_obj.summaries
-    print("summaries list", summaries_list)
+    logging.info("summaries list", summaries_list)
     if len(summaries_list) == 0:
         return ""
 
