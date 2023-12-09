@@ -27,7 +27,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Enter directory for app
-        run: cd timer_function
+        run: cd timer_function && ls
 
       - name: Create and start virtual environment
         run: |
