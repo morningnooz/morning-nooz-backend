@@ -1,6 +1,6 @@
 from string import Template
 from types import SimpleNamespace
-from app.static import (
+from lib.static import (
     topic_summary_template_table,
     topic_entry_template,
     closing_message,
@@ -8,7 +8,7 @@ from app.static import (
     error_template,
 )
 from urllib.parse import quote
-from app.processing.process import run_process
+from lib.processing.process import run_process
 import json
 import logging
 

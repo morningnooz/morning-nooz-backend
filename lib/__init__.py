@@ -11,7 +11,7 @@ import sys
 import firebase_admin
 import logging
 
-from app.text_processing import build_email
+from lib.text_processing import build_email
 
 email_sender = os.getenv("SENDER_EMAIL")
 email_password = os.getenv("SENDER_PASSWORD")
@@ -20,7 +20,7 @@ email_password = os.getenv("SENDER_PASSWORD")
 def app(prod: bool):
     logging.info(f"in prod {prod}")
     cred = credentials.Certificate(
-        "./app/morning-nooz-firebase-adminsdk-23o8s-47a5cd78d0.json"
+        "./lib/morning-nooz-firebase-adminsdk-23o8s-47a5cd78d0.json"
     )
     if not firebase_admin._apps:
         firebase_admin.initialize_app(
@@ -66,7 +66,7 @@ def send_sendgrid_email(email_receiver, name, topic, summaries):
 
     message = Mail(
         from_email=email_sender,
-        to_emails=email_receiver,
+        to_emails=[email_receiver, email_sender],
         subject=("Your Weekly Nooz"),
         html_content=body_msg,
     )

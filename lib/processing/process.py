@@ -1,7 +1,7 @@
 import json
 import os
 import time
-from app.processing.bing_news import search
+from lib.processing.bing_news import search
 from types import SimpleNamespace
 from langchain.chat_models.openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
