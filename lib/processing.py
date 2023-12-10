@@ -9,12 +9,38 @@ from lib.static import (
 )
 from urllib.parse import quote
 from lib.processing.process import run_process
+from lib.utils import send_message_to_queue
 import json
 import logging
 
 
+def process(data):
+    email = data["email"]
+    name = data["name"]
+    topics = data["topics"]
+
+    summary_list = ""
+    counter = 0
+    while len(summary_list) == 0 and counter < 10:
+        try:
+            logging.info(f"summary attempt {counter}")
+            summary_list = build(topics)
+            break
+        except:
+            logging.error(f"summary attempt no. {counter} failed")
+            counter += 1
+
+    message = {
+        "email": email,
+        "name": name,
+        "topics": topics,
+        "summaries": summary_list,
+    }
+    send_message_to_queue(message, "send-queue", os.getenv("STORAGE_CONNECTION"))
+
+
 # construct letter
-def build_email(topics):
+def build(topics):
     logging.info("building")
     # [{ topic, summary },...]
     summary_list = []
