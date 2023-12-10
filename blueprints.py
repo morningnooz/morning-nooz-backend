@@ -1,15 +1,16 @@
 import azure.functions as func
 import logging
 import os
+import base64
 import json
 from lib.dispatch import dispatch as run_dispatch
-from lib.processing import process as run_processing
+from lib.process import process as run_processing
 from lib.send import send_sendgrid_email
+from lib.utils import send_message_to_queue
 
 from dotenv import load_dotenv
 
 load_dotenv()
-storage_connection = os.getenv("STORAGE_CONNECTION")
 bp = func.Blueprint()
 
 
@@ -26,7 +27,13 @@ def dispatch(myTimer: func.TimerRequest) -> None:
     if os.getenv("ENV") == "production":
         prod = True
 
-    run_dispatch(prod)
+    to_dispatch = run_dispatch(prod)
+
+    for doc in to_dispatch:
+        doc_data = doc.to_dict()
+        send_message_to_queue(
+            doc_data, "process-queue", os.getenv("STORAGE_CONNECTION")
+        )
 
     logging.info("Python timer trigger function executed.")
 
@@ -34,21 +41,27 @@ def dispatch(myTimer: func.TimerRequest) -> None:
 
 
 @bp.queue_trigger(
-    arg_name="azqueue", queue_name="process-queue", connection=storage_connection
+    arg_name="azqueue", queue_name="process-queue", connection="AzureWebJobsStorage"
 )
 def process(azqueue: func.QueueMessage):
     message = json.loads(azqueue.get_body().decode("utf-8"))
-    logging.info(f"Python Queue trigger processed a message: {message}")
+    logging.info(f"[PROCESS] Process Queue trigger. Processing a message: {message}")
 
-    run_processing(message)
+    to_send = run_processing(message)
+    logging.info(f"[PROCESS] message processed: {message}")
+    send_message_to_queue(
+        to_send,
+        "send-queue",
+        os.getenv("STORAGE_CONNECTION"),
+    )
 
 
 @bp.queue_trigger(
-    arg_name="azqueue", queue_name="send-queue", connection=storage_connection
+    arg_name="azqueue", queue_name="send-queue", connection="AzureWebJobsStorage"
 )
 def send(azqueue: func.QueueMessage):
     message = json.loads(azqueue.get_body().decode("utf-8"))
-    logging.info(f"Python Queue trigger processed a message: {message}")
+    logging.info(f"[SEND] Send Queue trigger. Processing a message: {message}")
 
     send_sendgrid_email(
         email_receiver=message["email"],
@@ -56,3 +69,4 @@ def send(azqueue: func.QueueMessage):
         topic=message["topics"],
         summaries=message["summaries"],
     )
+    logging.info(f"[SEND] message sent: {message}")

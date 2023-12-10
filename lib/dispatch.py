@@ -25,11 +25,7 @@ def dispatch(prod: bool):
     data = get_firebase_data(db, prod)
 
     # iterate through data, and send email for each entry
-    for doc in data:
-        doc_data = doc.to_dict()
-        send_message_to_queue(
-            doc_data, "process-queue", os.getenv("STORAGE_CONNECTION")
-        )
+    return data
 
 
 def get_firebase_data(db, prod: bool):

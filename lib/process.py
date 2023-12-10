@@ -36,7 +36,7 @@ def process(data):
         "topics": topics,
         "summaries": summary_list,
     }
-    send_message_to_queue(message, "send-queue", os.getenv("STORAGE_CONNECTION"))
+    return message
 
 
 # construct letter
