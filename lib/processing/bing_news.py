@@ -1,18 +1,11 @@
 from string import Template
 import requests
+import logging
 import urllib.parse
 import os
+import json
 
 url = Template("https://api.bing.microsoft.com/v7.0/news/search?q=$query")
-
-params = {
-    "Ocp-Apim-Subscription-Key": os.getenv("BING_APIM_KEY"),
-    "freshness": "Week",
-    "sortBy": "Relevance",
-    "count": "10",
-    "mkt": "en-US",
-    "setlang": "en-US",
-}
 
 
 class NewsEntry:
@@ -38,27 +31,53 @@ class NewsEntry:
 
 def search(query_text):
     query_string = urllib.parse.quote(query_text)
-    url_string = url.substitute(query=query_string)
-    r = requests.get(url_string, headers=params)
+    url_string = url.substitute(
+        query=query_string
+    )  # Ensure 'url' is defined and valid.
 
-    if r.status_code == 200:
-        data: dict = r.json()
+    params = {
+        "Ocp-Apim-Subscription-Key": os.getenv("BING_APIM_KEY"),
+        "freshness": "Week",
+        "sortBy": "Relevance",
+        "count": "10",
+        "mkt": "en-US",
+        "setlang": "en-US",
+    }
+
+    try:
+        r = requests.get(
+            url_string, headers=params
+        )  # Ensure 'params' is defined and valid.
+
+        logging.info(f"API key: {params['Ocp-Apim-Subscription-Key']}")
+        if r.status_code != 200:
+            # pretty print error message
+            raise ValueError(f"{json.dumps(json.loads(r.text), indent=2)}")
+
+        data = r.json()
+
+        if "value" not in data or not data["value"]:
+            raise ValueError("No data found in response.")
+
         res = ""
-
-        for entry in data.get("value"):
+        for entry in data["value"]:
             try:
+                provider = entry.get("provider", [{}])[0]
                 entry_obj = NewsEntry(
                     entry.get("name"),
                     entry.get("url"),
-                    entry.get("provider")[0].get("name"),
+                    provider.get("name"),
                     entry.get("description"),
                 )
-                # res.append(entry_obj)
-                res += entry_obj.to_string()
-                res += " | "
-            except:
+                res += entry_obj.to_string() + " | "
+            except Exception as e:
+                logging.error("Error processing entry: %s", e)
                 continue
         return res
 
-    else:
-        return ""
+    except requests.RequestException as e:
+        logging.error("Request error: %s", e)
+        raise
+    except Exception as e:
+        logging.error("An error occurred: %s", e)
+        raise

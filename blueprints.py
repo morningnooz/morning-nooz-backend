@@ -37,8 +37,6 @@ def dispatch(myTimer: func.TimerRequest) -> None:
 
     logging.info("Python timer trigger function executed.")
 
-    logging.info("Python timer trigger function executed.")
-
 
 @bp.queue_trigger(
     arg_name="azqueue", queue_name="process-queue", connection="AzureWebJobsStorage"
@@ -48,12 +46,17 @@ def process(azqueue: func.QueueMessage):
     logging.info(f"[PROCESS] Process Queue trigger. Processing a message: {message}")
 
     to_send = run_processing(message)
+
+    try:
+        send_message_to_queue(
+            to_send,
+            "send-queue",
+            os.getenv("STORAGE_CONNECTION"),
+        )
+    except:
+        logging.error(f"Error queueing process queue: {message}")
+
     logging.info(f"[PROCESS] message processed: {message}")
-    send_message_to_queue(
-        to_send,
-        "send-queue",
-        os.getenv("STORAGE_CONNECTION"),
-    )
 
 
 @bp.queue_trigger(

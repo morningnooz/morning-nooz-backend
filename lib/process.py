@@ -26,8 +26,9 @@ def process(data):
             logging.info(f"summary attempt {counter}")
             summary_list = build(topics)
             break
-        except:
-            logging.error(f"summary attempt no. {counter} failed")
+        except Exception as e:
+            logging.error(e)
+            logging.info(f"summary attempt no. {counter} failed")
             counter += 1
 
     message = {

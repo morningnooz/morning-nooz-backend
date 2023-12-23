@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import logging
 from lib.processing.bing_news import search
 from types import SimpleNamespace
 from langchain.chat_models.openai import ChatOpenAI
@@ -216,6 +217,7 @@ def run_process(query):
     # time.sleep(1)
     # run query
     query_results = search(query)
+    logging.info(f"[BING API QUERY RESULTS] {query_results}")
     summaries = build_summary_chain(query, query_results)
 
     return summaries
