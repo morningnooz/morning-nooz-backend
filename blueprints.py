@@ -30,10 +30,7 @@ def dispatch(myTimer: func.TimerRequest) -> None:
     to_dispatch = run_dispatch(prod)
 
     for doc in to_dispatch:
-        doc_data = doc.to_dict()
-        send_message_to_queue(
-            doc_data, "process-queue", os.getenv("STORAGE_CONNECTION")
-        )
+        send_message_to_queue(doc, "process-queue", os.getenv("STORAGE_CONNECTION"))
 
     logging.info("Python timer trigger function executed.")
 

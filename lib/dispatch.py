@@ -1,6 +1,7 @@
 import os
 import logging
 import firebase_admin
+import datetime
 from firebase_admin import firestore
 from firebase_admin import credentials
 
@@ -24,8 +25,15 @@ def dispatch(prod: bool):
 
     data = get_firebase_data(db, prod)
 
-    # iterate through data, and send email for each entry
-    return data
+    dispatch_list = []
+    for doc in data:
+        doc_data = doc.to_dict()
+        # get current day from time
+        current_day = datetime.datetime.now().strftime("%A")
+        if doc_data["day"] != current_day:
+            dispatch_list.append(doc_data)
+
+    return dispatch_list
 
 
 def get_firebase_data(db, prod: bool):
