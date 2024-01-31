@@ -29,7 +29,7 @@ def dispatch(prod: bool):
     for doc in data:
         doc_data = doc.to_dict()
         # get current day from time
-        current_day = datetime.datetime.now().strftime("%a")
+        current_day = datetime.datetime.now().strftime("%A").lower()
         if doc_data["day"] == current_day:
             dispatch_list.append(doc_data)
 
