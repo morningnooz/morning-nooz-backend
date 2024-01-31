@@ -16,6 +16,7 @@ Ensure that you have the following environment variables set:
 - `OPENAI_API_KEY`: API key for OpenAI.
 - `BING_APIM_KEY`: API key for Bing News Search.
 - `SENDER_EMAIL`: Email address of the sender: `Morning Nooz <morning.nooz@gmail.com>`.
+- `CRON_TIME`: Cron string to set the timer function (e.g. "0 12 * * * *")
 
 ## Installation
 1. Clone the repository to your local environment.
