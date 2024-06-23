@@ -39,7 +39,7 @@ def search(query_text):
         "Ocp-Apim-Subscription-Key": os.getenv("BING_APIM_KEY"),
         "freshness": "Week",
         "sortBy": "Relevance",
-        "count": "10",
+        "count": "7",
         "mkt": "en-US",
         "setlang": "en-US",
     }
@@ -53,8 +53,8 @@ def search(query_text):
         if r.status_code != 200:
             # pretty print error message
             raise ValueError(f"{json.dumps(json.loads(r.text), indent=2)}")
-
         data = r.json()
+        logging.info(f"request {data}")
 
         if "value" not in data or not data["value"]:
             raise ValueError("No data found in response.")

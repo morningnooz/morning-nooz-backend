@@ -6,7 +6,7 @@ import json
 from lib.dispatch import dispatch as run_dispatch
 from lib.process import process as run_processing
 from lib.send import send_sendgrid_email
-from lib.utils import send_message_to_queue
+from lib.utils import send_message_to_db, send_message_to_queue
 
 from dotenv import load_dotenv
 
@@ -43,14 +43,16 @@ def process(azqueue: func.QueueMessage):
     message = json.loads(azqueue.get_body().decode("utf-8"))
     logging.info(f"[PROCESS] Process Queue trigger. Processing a message: {message}")
 
-    to_send = run_processing(message)
+    to_send, to_db = run_processing(message)
 
     try:
+        logging.info(f"[PROCESS] Sending message to send-queue: {to_send}")
         send_message_to_queue(
             to_send,
             "send-queue",
             os.getenv("STORAGE_CONNECTION"),
         )
+        send_message_to_db(to_db, message["userId"])
     except:
         logging.error(f"Error queueing process queue: {message}")
 

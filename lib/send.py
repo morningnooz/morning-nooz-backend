@@ -4,6 +4,7 @@ import os
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from string import Template
+from datetime import datetime
 
 
 def send_sendgrid_email(email_receiver, name, topic, summaries):
@@ -12,18 +13,18 @@ def send_sendgrid_email(email_receiver, name, topic, summaries):
     """
     ).substitute(name=name)
     if len(summaries) > 0:
-        body = Template(
-            "<em>Hello, $name!</em><br><br>Hope you've been well! Update your topics at <a href='morningnooz.com'>morningnooz.com</a>.<br>Here is your weekly digest:<br><br> $summaries"
-        )
-        body_msg = body.substitute(name=name, topic=topic, summaries=summaries)
+        body_msg = summaries
 
     email_sender = os.getenv("SENDER_EMAIL")
     logging.info(email_sender)
 
+    now = datetime.now()
+    formatted_date = now.strftime("%B %d, %Y")
+
     message = Mail(
         from_email=email_sender,
         to_emails=[email_receiver, email_sender],
-        subject=("Your Weekly Nooz"),
+        subject=(f"Your Daily Digest - {formatted_date}"),
         html_content=body_msg,
     )
     try:

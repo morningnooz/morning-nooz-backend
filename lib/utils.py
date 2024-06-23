@@ -2,7 +2,9 @@ import json
 import base64
 import logging
 from azure.storage.queue import QueueClient
-
+import firebase_admin
+from firebase_admin import firestore
+from firebase_admin import credentials
 
 def send_message_to_queue(message, queue_name, connection_string):
     # Create a QueueClient
@@ -26,3 +28,38 @@ def send_message_to_queue(message, queue_name, connection_string):
     # Send the message
     response = queue_client.send_message(base64_encoded_message)
     logging.info(f"Message added to {queue_name}: {response.id}")
+
+def send_message_to_db(message, user_id):
+    try:
+        # Attempt to initialize the app
+        cred = credentials.Certificate(
+            "./lib/morning-nooz-firebase-adminsdk-23o8s-47a5cd78d0.json"
+        )
+        firebase_admin.initialize_app(
+            cred, {"databaseURL": "https://morning-nooz.firebaseio.com"}
+        )
+        logging.info('Firebase app initialized.')
+    except ValueError as e:
+        # Firebase app is already initialized
+        logging.info('Firebase app already initialized.')
+    except Exception as e:
+        # Other exceptions
+        logging.error(f"An error occurred while initializing Firebase app: {e}")
+        return
+
+    logging.info('Connected to Firebase.')
+    
+    try:
+        db = firestore.client()
+        # drop the entry in
+        ref = db.collection("nysignal-users")
+        logging.info('connected to collection')
+        logging.info(f"user_id: {user_id}")
+
+        # Retrieve the data
+        doc = ref.document(user_id)
+        logging.info(f"doc connected: {doc}")
+        doc.set(message)
+        logging.info(f"Document created. Label: {user_id}")
+    except Exception as e:
+        print(f"An error occurred: {e}")

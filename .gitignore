@@ -24,6 +24,9 @@ project.lock.json
 appsettings.json
 local.settings.json
 
+package-lock.json
+path/
+
 node_modules
 dist
 

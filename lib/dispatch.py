@@ -28,17 +28,15 @@ def dispatch(prod: bool):
     dispatch_list = []
     for doc in data:
         doc_data = doc.to_dict()
-        # get current day from time
-        current_day = datetime.datetime.now().strftime("%A").lower()
-        if doc_data["day"] == current_day:
-            dispatch_list.append(doc_data)
+        # run everyday
+        dispatch_list.append(doc_data)
 
     return dispatch_list
 
 
 def get_firebase_data(db, prod: bool):
     # Get a database reference
-    ref = db.collection("profiles") if prod else db.collection("test-users")
+    ref = db.collection("beta-profiles") if prod else db.collection("beta-test")
 
     # Retrieve the data
     data = ref.get()

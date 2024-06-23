@@ -8,12 +8,16 @@ azure-cognitiveservices-search-newssearch==2.0.0
 uvicorn==0.13.4
 urllib3==1.26.12
 langchain==0.0.333
-openai==0.27.8
+openai==1.9.0
+openpipe==4.13.0
+feedparser==6.0.11
 firebase-admin==6.1.0
+instructor==1.2.6
 requests==2.28.1
 sendgrid==6.10.0
 firebase-admin==6.1.0
 urllib3==1.26.12
 python-dotenv==1.0.0
+pydantic==2.7.1
 # sentence-transformers==2.2.2
 redis==5.0.1
