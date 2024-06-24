@@ -13,12 +13,11 @@ from datetime import datetime, timedelta, timezone
 import email.utils
 
 # vars: docs_info, query_string
-reduce_template = Template("""The following is set of articles and their name, url, provider, description, and a score of their news relevance:
+reduce_template = Template("""The goal is to create a news digest for an educated user, using the most relevant news to $query_string
+    The following is set of articles and their name, url, provider, and description. The articles contain varying degrees of relevance to $query_string, and you will only extract the most relevant points:
     $docs_info ---------
-    Extract the key points then synthesize and refine it into a final, consolidated summary of the three to five key ideas across all the sources, with five (5) sentences for each, using examples from the articles. Use details from the texts, and please cite the references by creating an <a> tag referencing the url for the given article, with the text in the <a> tag set to the article's provider.
-    The goal is to create a news digest for an educated user, using the most relevant news to $query_string
-    Do NOT include information from articles that are not relevant news stories.
-    ONLY include articles with news scores above 6.
+    Extract the key points then synthesize and refine it into a final, consolidated summary of the top three to five key ideas across all the sources, with up to five (5) points for each, using examples from the articles. Use details from the texts, and please cite the references by creating an <a> tag referencing the url for the given article, with the text in the <a> tag set to the article's provider.
+    Do NOT include information from articles that are not relevant news stories pertaining to $query_string.
     Please do NOT include the words "the documents" or "the articles" or "this theme" (or other metadata) in the summaries. Just provide detailed, straight-forward summaries of the facts encountered.
     Filter out any information about privacy policies or the authors of the articles. Ignore any information that is likely not to be relevant to a news digest, such as sales deals and descriptions about products.
     Output the summaries as a bulleted list, and try to include multiple citations for each key point.
@@ -62,7 +61,7 @@ reduce_template = Template("""The following is set of articles and their name, u
     Helpful Answer:""")
 
 # vars: docs, query
-scoring_template = Template("""The following is set of articles and their name, url, provider, and description:
+old_scoring_template = Template("""The following is set of articles and their name, url, provider, and description:
     $docs
     Based on this list of docs, please rank the relevance of news articles relating to $query. If there are many articles, only score the most relevant 25 articles.
     Repeat the text and provide a 'news score' for each document, as a number from 1 to 10, which is higher when the content is news that would have high relevance for a reader trying to learn about the current events and discourse for $query, and
@@ -199,6 +198,15 @@ DESC: The average late-stage round in NYC for October was $56.4M Tweet This The 
 SCORE: 6
     Helpful Answer:""")
 
+scoring_template = Template("""The following is set of articles and their name, url, provider, and description. $prefs:
+    $docs
+    Based on this list of docs, please rank the relevance of news articles relating to $query.
+    Repeat the text and provide a 'news score' for each document, as a number from 1 to 10, which is higher when the content is news that would have high relevance for a reader trying to learn about the current events and discourse for $query, and
+    lower for text which is unrelated to current events related to their topic. Summaries with sales/deals information, general encyclopedia-like descriptions of things or authors, or simple references to other sites must receive scores less than 3.
+    $prefs
+    ---
+    Helpful Answer:""")
+
 # vars: query
 augment_template = Template("""You are a helpful semantics expert who can generate semantically similar news queries for a keyword-based news search engine, returning a list of 2 different options, delimited by ,.
             ---EXAMPLE--- INPUT: nvidia OUTPUT: queries: [nvidia gpu, nvidia chips] ---END EXAMPLE--- 
@@ -226,16 +234,17 @@ def is_older(date_str):
     current_time = datetime.now(timezone.utc)
 
     # Check if the parsed date is older than one day from the current time
-    two_days_ago = current_time - timedelta(days=2)
-    return parsed_date < two_days_ago
+    days_ago = current_time - timedelta(days=1.5)
+    return parsed_date < days_ago
 
 
-def parse_rss_feed(feed_url):
+def parse_rss_feed(feed_url, url_set: set):
     # Parse the RSS feed
     feed = feedparser.parse(feed_url)
 
     feed_entries = dict(feed)["entries"]
     result = ""
+    cleaned_entries = 0
 
     logging.info(f'num of feed entries: {str(len(feed_entries))}')
     logging.info(f'RSS url: {feed_url}')
@@ -250,9 +259,15 @@ def parse_rss_feed(feed_url):
         feed_url = article.link if 'link' in article else 'No link'
         feed_provider = extract_subdomain(article.link) if 'link' in article else article.get('publisher', article.get('author', 'No provider'))
         feed_desc = clean_html(article.get('summary', article.get('content', 'No provider')))
+
+        url_set.add(feed_url)
     
         # Format the output string
         result += f"NAME: {feed_name}, URL: {feed_url}, PROVIDER: {feed_provider}, DESC: {feed_desc}| "
+
+        cleaned_entries += 1
+    
+    logging.info(f'num of clean entries: {str(cleaned_entries)}')
     
     return result
 
@@ -282,7 +297,7 @@ client = instructor.from_openai(OpenAI())
 
 def scoring(articles, topic, preference) -> NewsScores:
 
-    pref_message = f"also score the news based on its relevance to the user's preference: {preference}" if preference else ""
+    pref_message = f"also score the news based on its relevance to the user's topic ({topic}) and their preference: {preference}" if preference else ""
     score_prompt = scoring_template.safe_substitute({ "docs": articles, "query": topic, "prefs": pref_message})
     logging.info(f'SCORE PROMPT: {score_prompt}')
 
@@ -312,19 +327,20 @@ def scoring(articles, topic, preference) -> NewsScores:
             response_model=NewsScores
         )
 
-def get_summaries(query, query_results, preferences) -> TopicSummaries:
+def get_summaries(query, query_results, preferences, url_set: set) -> TopicSummaries:
     # chunk scoring into each group then join then
     scored_news: list[list[NewsScore]] = []
     for group in query_results:
         scored_group = scoring(group, query, preferences)
-        scored_news.append(scored_group.news)
+        if (len(scored_group.news) > 0):
+            scored_news.append(scored_group.news)
     logging.info(f"SCORED NEWS: {scored_news}\n")
     # filter out scores <= 5
     # Flatten the list of lists
     flattened_scored_news = [news for group in scored_news for news in group]
 
     # Filter out scores <= 5
-    filtered_news = [news for news in flattened_scored_news if int(news.score) > 5]
+    filtered_news = [news for news in flattened_scored_news if (int(news.score) > 6 and news.url in url_set)]
 
     logging.info(f"FILTERED NEWS: {filtered_news}\n")
 
@@ -366,8 +382,14 @@ def augment_query(query):
 
 # run query + construct summary & return object with summaries
 def run_process(query, preferences, sources) -> TopicSummaries:
+    url_set = set()
+
+    results = []
     # scan each RSS feed and append it to query_results
-    results = [parse_rss_feed(u) for u in sources]
+    for u in sources:
+        res = parse_rss_feed(u, url_set)
+        if len(res) > 0:
+            results.append(res) 
 
     query_topics = [query]
 
@@ -379,12 +401,13 @@ def run_process(query, preferences, sources) -> TopicSummaries:
 
         logging.info(f"AUG QUERIES {str(query_topics)}\n")
 
-    query_results = [search(q) for q in query_topics]
-
-    results.append(query_results)
+    for q in query_topics:
+        res = search(q, url_set)
+        if len(res) > 0:
+            results.append(res) 
 
     logging.info(f"RESULTS: {results}")
 
-    summaries = get_summaries(query, results, preferences)
+    summaries = get_summaries(query, results, preferences, url_set)
 
     return summaries
