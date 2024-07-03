@@ -1,5 +1,6 @@
 # Morning Nooz Backend
-
+MorningNooz ([https://morningnooz.com](url)) is a news aggregator service which uses LLMs to build summaries (with citations) for the news on any topic, at any level of detail.
+![image](https://github.com/morningnooz/morning-nooz-backend/assets/47679108/362bcc15-5f12-482f-ab6e-4e7c5b19226c)
 ## Overview
 Welcome to the Morning Nooz backend service! This README provides an overview of the backend setup for the Morning Nooz email service. The backend is structured around Azure Functions, making use of timer and queue triggers to process and dispatch personalized news summaries based on user-selected topics.
 
